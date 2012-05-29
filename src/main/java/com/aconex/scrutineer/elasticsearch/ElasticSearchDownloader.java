@@ -6,7 +6,6 @@ import java.io.OutputStream;
 
 import com.aconex.scrutineer.IdAndVersion;
 import com.aconex.scrutineer.LogUtils;
-import org.apache.log4j.Logger;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
@@ -15,6 +14,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.slf4j.Logger;
 
 public class ElasticSearchDownloader {
 
@@ -72,7 +72,7 @@ public class ElasticSearchDownloader {
     QueryStringQueryBuilder createQuery() {
         return QueryBuilders.queryString(query).defaultOperator(QueryStringQueryBuilder.Operator.AND).defaultField("_all");
     }
-    
+
     @SuppressWarnings("PMD.NcssMethodCount")
     SearchResponse startScroll() {
         SearchRequestBuilder searchRequestBuilder = client.prepareSearch(indexName);

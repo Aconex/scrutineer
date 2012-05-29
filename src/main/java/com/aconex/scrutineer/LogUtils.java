@@ -1,7 +1,8 @@
 package com.aconex.scrutineer;
 
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class LogUtils {
 
@@ -55,6 +56,6 @@ public final class LogUtils {
         if(!"<clinit>".equals(myCaller.getMethodName())) {
             throw new RuntimeException("Logger must be static");
         }
-        return Logger.getLogger(myCaller.getClassName());
+        return LoggerFactory.getLogger(myCaller.getClassName());
     }
 }

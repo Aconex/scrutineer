@@ -7,12 +7,13 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import org.slf4j.Logger;
+
 import com.aconex.scrutineer.IdAndVersion;
 import com.aconex.scrutineer.IdAndVersionStream;
 import com.aconex.scrutineer.LogUtils;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
-import org.apache.log4j.Logger;
 
 public class JdbcIdAndVersionStream implements IdAndVersionStream {
 

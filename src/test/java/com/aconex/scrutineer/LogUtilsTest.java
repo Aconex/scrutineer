@@ -8,10 +8,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.apache.log4j.Logger;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.slf4j.Logger;
 
 public class LogUtilsTest {
 
@@ -26,7 +26,7 @@ public class LogUtilsTest {
     }
 
     @Test
-    public void shouldSetLoggerAsAStatigField() {
+    public void shouldSetLoggerAsAStaticField() {
         assertThat(StaticTester.class.getName(), is(StaticTester.LOG.getName()));
     }
 
@@ -67,6 +67,7 @@ public class LogUtilsTest {
         verify(logger).error(LOG_MESSAGE);
     }
 
+    @Test
     public void shouldLogTimeTakenInfoMessages() {
         long startTime = System.currentTimeMillis();
 

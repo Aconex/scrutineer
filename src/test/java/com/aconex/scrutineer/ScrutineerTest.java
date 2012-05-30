@@ -7,12 +7,14 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
-import com.aconex.scrutineer.elasticsearch.ElasticSearchIdAndVersionStream;
-import com.aconex.scrutineer.jdbc.JdbcIdAndVersionStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import com.aconex.scrutineer.elasticsearch.ElasticSearchIdAndVersionStream;
+import com.aconex.scrutineer.javautil.StringIdAndVersionComparator;
+import com.aconex.scrutineer.jdbc.JdbcIdAndVersionStream;
 
 public class ScrutineerTest {
 
@@ -43,7 +45,7 @@ public class ScrutineerTest {
     @Test
     public void testVerify(){
         Scrutineer scrutineer = spy(new Scrutineer(options));
-        doReturn(elasticSearchIdAndVersionStream).when(scrutineer).createElasticSearchIdAndVersionStream(options);
+        doReturn(elasticSearchIdAndVersionStream).when(scrutineer).createElasticSearchIdAndVersionStream(eq(options), any(StringIdAndVersionComparator.class));
         doReturn(jdbcIdAndVersionStream).when(scrutineer).createJdbcIdAndVersionStream(options);
         doNothing().when(scrutineer).verify(eq(elasticSearchIdAndVersionStream), eq(jdbcIdAndVersionStream), any(IdAndVersionStreamVerifier.class));
         scrutineer.verify();

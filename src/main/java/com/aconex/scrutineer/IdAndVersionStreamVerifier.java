@@ -10,21 +10,26 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 
-import com.fasterxml.sort.util.NaturalComparator;
+import com.aconex.scrutineer.javautil.StringIdAndVersionComparator;
 
 public class IdAndVersionStreamVerifier {
 
     private static final Logger LOG = LogUtils.loggerForThisClass();
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(2, new NamedDaemonThreadFactory("StreamOpener"));
+	private final Comparator<IdAndVersion> comparator;
 
-	public void verify(IdAndVersionStream primaryStream, IdAndVersionStream secondayStream, IdAndVersionStreamVerifierListener idAndVersionStreamVerifierListener) {
-		verify(primaryStream, secondayStream, idAndVersionStreamVerifierListener, new NaturalComparator<IdAndVersion>());
+	public IdAndVersionStreamVerifier() {
+		this (new StringIdAndVersionComparator());
+	}
+
+	public IdAndVersionStreamVerifier(Comparator<IdAndVersion> comparator) {
+		this.comparator = comparator;
 	}
 
     //CHECKSTYLE:OFF
     @SuppressWarnings("PMD.NcssMethodCount")
-    public void verify(final IdAndVersionStream primaryStream, final IdAndVersionStream secondayStream, final IdAndVersionStreamVerifierListener idAndVersionStreamVerifierListener, Comparator<IdAndVersion> comparator) {
+	public void verify(IdAndVersionStream primaryStream, IdAndVersionStream secondayStream, IdAndVersionStreamVerifierListener idAndVersionStreamVerifierListener) {
         long numItems = 0;
         long begin = System.currentTimeMillis();
 

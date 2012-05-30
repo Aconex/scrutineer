@@ -1,11 +1,11 @@
 package com.aconex.scrutineer.elasticsearch;
 
-import com.aconex.scrutineer.IdAndVersion;
-import com.fasterxml.sort.DataReaderFactory;
-import com.fasterxml.sort.DataWriterFactory;
-import com.fasterxml.sort.SortConfig;
-import com.fasterxml.sort.Sorter;
-import com.fasterxml.sort.util.NaturalComparator;
+import static com.aconex.scrutineer.HasIdAndVersionMatcher.hasIdAndVersion;
+import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+import java.util.Iterator;
+
 import org.apache.commons.lang.SystemUtils;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.VersionType;
@@ -14,11 +14,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Iterator;
-
-import static com.aconex.scrutineer.HasIdAndVersionMatcher.hasIdAndVersion;
-import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
-import static org.hamcrest.MatcherAssert.assertThat;
+import com.aconex.scrutineer.IdAndVersion;
+import com.aconex.scrutineer.javautil.StringIdAndVersionComparator;
+import com.fasterxml.sort.DataReaderFactory;
+import com.fasterxml.sort.DataWriterFactory;
+import com.fasterxml.sort.SortConfig;
+import com.fasterxml.sort.Sorter;
 
 public class ElasticSearchIdAndVersionStreamIntegrationTest {
 
@@ -51,7 +52,7 @@ public class ElasticSearchIdAndVersionStreamIntegrationTest {
         SortConfig sortConfig = new SortConfig().withMaxMemoryUsage(256*1024*1024);
         DataReaderFactory<IdAndVersion> dataReaderFactory = new IdAndVersionDataReaderFactory();
         DataWriterFactory<IdAndVersion> dataWriterFactory = new IdAndVersionDataWriterFactory();
-        Sorter sorter = new Sorter(sortConfig, dataReaderFactory, dataWriterFactory, new NaturalComparator<IdAndVersion>());
+        Sorter sorter = new Sorter(sortConfig, dataReaderFactory, dataWriterFactory, new StringIdAndVersionComparator());
         ElasticSearchDownloader elasticSearchDownloader = new ElasticSearchDownloader(client, INDEX_NAME, "_type:idandversion");
         ElasticSearchIdAndVersionStream elasticSearchIdAndVersionStream =
                 new ElasticSearchIdAndVersionStream(elasticSearchDownloader, new ElasticSearchSorter(sorter), new IteratorFactory(), SystemUtils.getJavaIoTmpDir().getAbsolutePath());

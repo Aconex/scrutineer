@@ -5,6 +5,14 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Comparator;
+
+import org.apache.commons.lang.SystemUtils;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.node.Node;
 
 import com.aconex.scrutineer.elasticsearch.ElasticSearchDownloader;
 import com.aconex.scrutineer.elasticsearch.ElasticSearchIdAndVersionStream;
@@ -12,6 +20,8 @@ import com.aconex.scrutineer.elasticsearch.ElasticSearchSorter;
 import com.aconex.scrutineer.elasticsearch.IdAndVersionDataReaderFactory;
 import com.aconex.scrutineer.elasticsearch.IdAndVersionDataWriterFactory;
 import com.aconex.scrutineer.elasticsearch.IteratorFactory;
+import com.aconex.scrutineer.javautil.NumericIdAndVersionComparator;
+import com.aconex.scrutineer.javautil.StringIdAndVersionComparator;
 import com.aconex.scrutineer.jdbc.JdbcIdAndVersionStream;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -20,13 +30,6 @@ import com.fasterxml.sort.DataReaderFactory;
 import com.fasterxml.sort.DataWriterFactory;
 import com.fasterxml.sort.SortConfig;
 import com.fasterxml.sort.Sorter;
-import com.fasterxml.sort.util.NaturalComparator;
-import org.apache.commons.lang.SystemUtils;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.node.Node;
 
 public class Scrutineer {
 
@@ -53,10 +56,18 @@ public class Scrutineer {
     }
 
     public void verify() {
-        ElasticSearchIdAndVersionStream elasticSearchIdAndVersionStream = createElasticSearchIdAndVersionStream(options);
+    	if (options.numeric) {
+    		verify(new NumericIdAndVersionComparator());
+    	} else {
+    		verify(new StringIdAndVersionComparator());
+    	}
+    }
+
+    public void verify(Comparator<IdAndVersion> comparator) {
+        ElasticSearchIdAndVersionStream elasticSearchIdAndVersionStream = createElasticSearchIdAndVersionStream(options, comparator);
         JdbcIdAndVersionStream jdbcIdAndVersionStream = createJdbcIdAndVersionStream(options);
 
-        verify(elasticSearchIdAndVersionStream, jdbcIdAndVersionStream, new IdAndVersionStreamVerifier());
+        verify(elasticSearchIdAndVersionStream, jdbcIdAndVersionStream, new IdAndVersionStreamVerifier(comparator));
     }
 
     void close() {
@@ -92,17 +103,17 @@ public class Scrutineer {
         this.options = options;
     }
 
-    ElasticSearchIdAndVersionStream createElasticSearchIdAndVersionStream(ScrutineerCommandLineOptions options) {
+    ElasticSearchIdAndVersionStream createElasticSearchIdAndVersionStream(ScrutineerCommandLineOptions options, Comparator<IdAndVersion> comparator) {
         this.node = nodeBuilder().client(true).clusterName(options.clusterName).node();
         this.client = node.client();
-        return new ElasticSearchIdAndVersionStream(new ElasticSearchDownloader(client, options.indexName, options.query), new ElasticSearchSorter(createSorter()), new IteratorFactory(), SystemUtils.getJavaIoTmpDir().getAbsolutePath());
+        return new ElasticSearchIdAndVersionStream(new ElasticSearchDownloader(client, options.indexName, options.query), new ElasticSearchSorter(createSorter(comparator)), new IteratorFactory(), SystemUtils.getJavaIoTmpDir().getAbsolutePath());
     }
 
-    private Sorter<IdAndVersion> createSorter() {
+    private Sorter<IdAndVersion> createSorter(Comparator<IdAndVersion> comparator) {
         SortConfig sortConfig = new SortConfig().withMaxMemoryUsage(DEFAULT_SORT_MEM);
         DataReaderFactory<IdAndVersion> dataReaderFactory = new IdAndVersionDataReaderFactory();
         DataWriterFactory<IdAndVersion> dataWriterFactory = new IdAndVersionDataWriterFactory();
-        return new Sorter<IdAndVersion>(sortConfig, dataReaderFactory, dataWriterFactory, new NaturalComparator<IdAndVersion>());
+        return new Sorter<IdAndVersion>(sortConfig, dataReaderFactory, dataWriterFactory, comparator);
     }
 
     JdbcIdAndVersionStream createJdbcIdAndVersionStream(ScrutineerCommandLineOptions options) {
@@ -152,6 +163,9 @@ public class Scrutineer {
 
         @Parameter(names = "--sql", description = "SQL used to create Primary stream, which should return results in _lexicographical_ order", required = true)
         public String sql;
+
+        @Parameter(names = "--numeric", description = "JDBC query is sorted numerically")
+        public boolean numeric = false;
     }
     // CHECKSTYLE:ON
 

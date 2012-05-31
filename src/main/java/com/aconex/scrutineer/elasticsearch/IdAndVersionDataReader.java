@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 
 import com.aconex.scrutineer.IdAndVersion;
+import com.aconex.scrutineer.IdAndVersionFactory;
 import com.fasterxml.sort.DataReader;
 
 class IdAndVersionDataReader extends DataReader<IdAndVersion> {
@@ -14,17 +15,18 @@ class IdAndVersionDataReader extends DataReader<IdAndVersion> {
     private static final int BYTES_PER_OBJECT_POINTER = 24;
     private static final int BYTES_PER_ARRAY_POINTER = 28;
 
-
+	private final IdAndVersionFactory factory;
     private final ObjectInputStream objectInputStream;
 
-    public IdAndVersionDataReader(ObjectInputStream objectInputStream) {
+    public IdAndVersionDataReader(IdAndVersionFactory factory, ObjectInputStream objectInputStream) {
+    	this.factory = factory;
         this.objectInputStream = objectInputStream;
     }
 
     @Override
     public IdAndVersion readNext() throws IOException {
         try {
-            return IdAndVersion.readFromStream(objectInputStream);
+            return factory.readFromStream(objectInputStream);
         } catch (EOFException e) {
             return null;
         }

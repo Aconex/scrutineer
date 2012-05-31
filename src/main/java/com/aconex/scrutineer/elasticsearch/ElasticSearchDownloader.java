@@ -4,8 +4,9 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
-import com.aconex.scrutineer.IdAndVersion;
+import com.aconex.scrutineer.IdAndVersionFactory;
 import com.aconex.scrutineer.LogUtils;
+
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
@@ -27,11 +28,13 @@ public class ElasticSearchDownloader {
     private final Client client;
     private final String indexName;
     private final String query;
+	private final IdAndVersionFactory idAndVersionFactory;
 
-    public ElasticSearchDownloader(Client client, String indexName, String query) {
+    public ElasticSearchDownloader(Client client, String indexName, String query, IdAndVersionFactory idAndVersionFactory) {
         this.client = client;
         this.indexName = indexName;
         this.query = query;
+        this.idAndVersionFactory = idAndVersionFactory;
     }
 
     public void downloadTo(OutputStream outputStream) {
@@ -63,7 +66,7 @@ public class ElasticSearchDownloader {
     boolean writeSearchResponseToOutputStream(ObjectOutputStream objectOutputStream, SearchResponse searchResponse) throws IOException {
         SearchHit[] hits = searchResponse.getHits().hits();
         for (SearchHit hit : hits) {
-            new IdAndVersion(hit.getId(), hit.getVersion()).writeToStream(objectOutputStream);
+        	idAndVersionFactory.create(hit.getId(), hit.getVersion()).writeToStream(objectOutputStream);
             numItems++;
         }
         return hits.length > 0;

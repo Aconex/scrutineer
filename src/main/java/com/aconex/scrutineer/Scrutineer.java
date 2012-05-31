@@ -6,6 +6,13 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+import org.apache.commons.lang.SystemUtils;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.node.Node;
+
 import com.aconex.scrutineer.elasticsearch.ElasticSearchDownloader;
 import com.aconex.scrutineer.elasticsearch.ElasticSearchIdAndVersionStream;
 import com.aconex.scrutineer.elasticsearch.ElasticSearchSorter;
@@ -21,12 +28,6 @@ import com.fasterxml.sort.DataWriterFactory;
 import com.fasterxml.sort.SortConfig;
 import com.fasterxml.sort.Sorter;
 import com.fasterxml.sort.util.NaturalComparator;
-import org.apache.commons.lang.SystemUtils;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.node.Node;
 
 public class Scrutineer {
 
@@ -53,6 +54,7 @@ public class Scrutineer {
     }
 
     public void verify() {
+   		idAndVersionFactory = createIdAndVersionFactory();
         ElasticSearchIdAndVersionStream elasticSearchIdAndVersionStream = createElasticSearchIdAndVersionStream(options);
         JdbcIdAndVersionStream jdbcIdAndVersionStream = createJdbcIdAndVersionStream(options);
 
@@ -92,22 +94,26 @@ public class Scrutineer {
         this.options = options;
     }
 
+	private IdAndVersionFactory createIdAndVersionFactory() {
+		return options.numeric ? LongIdAndVersion.FACTORY : StringIdAndVersion.FACTORY;
+	}
+
     ElasticSearchIdAndVersionStream createElasticSearchIdAndVersionStream(ScrutineerCommandLineOptions options) {
         this.node = nodeBuilder().client(true).clusterName(options.clusterName).node();
         this.client = node.client();
-        return new ElasticSearchIdAndVersionStream(new ElasticSearchDownloader(client, options.indexName, options.query), new ElasticSearchSorter(createSorter()), new IteratorFactory(), SystemUtils.getJavaIoTmpDir().getAbsolutePath());
+        return new ElasticSearchIdAndVersionStream(new ElasticSearchDownloader(client, options.indexName, options.query, idAndVersionFactory), new ElasticSearchSorter(createSorter()), new IteratorFactory(idAndVersionFactory), SystemUtils.getJavaIoTmpDir().getAbsolutePath());
     }
 
     private Sorter<IdAndVersion> createSorter() {
         SortConfig sortConfig = new SortConfig().withMaxMemoryUsage(DEFAULT_SORT_MEM);
-        DataReaderFactory<IdAndVersion> dataReaderFactory = new IdAndVersionDataReaderFactory();
+        DataReaderFactory<IdAndVersion> dataReaderFactory = new IdAndVersionDataReaderFactory(idAndVersionFactory);
         DataWriterFactory<IdAndVersion> dataWriterFactory = new IdAndVersionDataWriterFactory();
         return new Sorter<IdAndVersion>(sortConfig, dataReaderFactory, dataWriterFactory, new NaturalComparator<IdAndVersion>());
     }
 
     JdbcIdAndVersionStream createJdbcIdAndVersionStream(ScrutineerCommandLineOptions options) {
         this.connection = initializeJdbcDriverAndConnection(options);
-        return new JdbcIdAndVersionStream(connection, options.sql);
+        return new JdbcIdAndVersionStream(connection, options.sql, idAndVersionFactory);
     }
 
     private Connection initializeJdbcDriverAndConnection(ScrutineerCommandLineOptions options) {
@@ -122,6 +128,7 @@ public class Scrutineer {
 
     private static final int DEFAULT_SORT_MEM = 256 * 1024 * 1024;
     private final ScrutineerCommandLineOptions options;
+	private IdAndVersionFactory idAndVersionFactory;
     private Node node;
     private Client client;
     private Connection connection;
@@ -152,6 +159,9 @@ public class Scrutineer {
 
         @Parameter(names = "--sql", description = "SQL used to create Primary stream, which should return results in _lexicographical_ order", required = true)
         public String sql;
+
+        @Parameter(names = "--numeric", description = "JDBC query is sorted numerically")
+        public boolean numeric = false;
     }
     // CHECKSTYLE:ON
 

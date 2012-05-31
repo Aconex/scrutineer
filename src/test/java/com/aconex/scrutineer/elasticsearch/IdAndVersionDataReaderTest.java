@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 
 import com.aconex.scrutineer.IdAndVersion;
+import com.aconex.scrutineer.IdAndVersionFactory;
+import com.aconex.scrutineer.StringIdAndVersion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -23,17 +25,18 @@ public class IdAndVersionDataReaderTest {
     @Mock
     private ObjectInputStream objectInputStream;
     private IdAndVersionDataReader idAndVersionDataReader;
+	private final IdAndVersionFactory idAndVersionFactory = StringIdAndVersion.FACTORY;
 
 
     @Before
     public void setup() {
         initMocks(this);
-        idAndVersionDataReader = new IdAndVersionDataReader(objectInputStream);
+        idAndVersionDataReader = new IdAndVersionDataReader(idAndVersionFactory , objectInputStream);
     }
 
     @Test
     public void shouldGiveAndEstimateOfSize() {
-        assertThat(idAndVersionDataReader.estimateSizeInBytes(new IdAndVersion(ID, VERSION)), is(ID.length() * 2 + 84));
+        assertThat(idAndVersionDataReader.estimateSizeInBytes(new StringIdAndVersion(ID, VERSION)), is(ID.length() * 2 + 84));
     }
 
     @Test

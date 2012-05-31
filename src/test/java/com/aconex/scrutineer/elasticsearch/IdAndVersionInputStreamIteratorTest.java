@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 
 import com.aconex.scrutineer.IdAndVersion;
+import com.aconex.scrutineer.StringIdAndVersion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -39,14 +40,14 @@ public class IdAndVersionInputStreamIteratorTest {
 
     @Test
     public void hasNextShouldReturnTrueForNonEmptyStream() throws IOException {
-        when(idAndVersionDataReader.readNext()).thenReturn(new IdAndVersion(ID, VERSION));
+        when(idAndVersionDataReader.readNext()).thenReturn(new StringIdAndVersion(ID, VERSION));
         IdAndVersionInputStreamIterator idAndVersionInputStreamIterator = new IdAndVersionInputStreamIterator(idAndVersionDataReader);
         assertThat(idAndVersionInputStreamIterator.hasNext(), is(true));
     }
 
     @Test
     public void shouldGetTheNextItem() throws IOException {
-        IdAndVersion idAndVersion = new IdAndVersion(ID, VERSION);
+        IdAndVersion idAndVersion = new StringIdAndVersion(ID, VERSION);
         when(idAndVersionDataReader.readNext()).thenReturn(idAndVersion);
         IdAndVersionInputStreamIterator idAndVersionInputStreamIterator = new IdAndVersionInputStreamIterator(idAndVersionDataReader);
         assertThat(idAndVersionInputStreamIterator.next(), is(idAndVersion));
@@ -54,7 +55,7 @@ public class IdAndVersionInputStreamIteratorTest {
 
     @Test
     public void hasNextShouldReturnFalseAtEndOfTheStream() throws IOException {
-        IdAndVersion idAndVersion = new IdAndVersion(ID, VERSION);
+    	IdAndVersion idAndVersion = new StringIdAndVersion(ID, VERSION);
         when(idAndVersionDataReader.readNext()).thenReturn(idAndVersion).thenReturn(null);
         IdAndVersionInputStreamIterator idAndVersionInputStreamIterator = new IdAndVersionInputStreamIterator(idAndVersionDataReader);
         assertThat(idAndVersionInputStreamIterator.next(), is(idAndVersion));

@@ -1,6 +1,5 @@
 package com.aconex.scrutineer;
 
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -10,21 +9,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 
-import com.fasterxml.sort.util.NaturalComparator;
-
 public class IdAndVersionStreamVerifier {
 
     private static final Logger LOG = LogUtils.loggerForThisClass();
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(2, new NamedDaemonThreadFactory("StreamOpener"));
 
-	public void verify(IdAndVersionStream primaryStream, IdAndVersionStream secondayStream, IdAndVersionStreamVerifierListener idAndVersionStreamVerifierListener) {
-		verify(primaryStream, secondayStream, idAndVersionStreamVerifierListener, new NaturalComparator<IdAndVersion>());
-	}
-
     //CHECKSTYLE:OFF
     @SuppressWarnings("PMD.NcssMethodCount")
-    public void verify(final IdAndVersionStream primaryStream, final IdAndVersionStream secondayStream, final IdAndVersionStreamVerifierListener idAndVersionStreamVerifierListener, Comparator<IdAndVersion> comparator) {
+	public void verify(IdAndVersionStream primaryStream, IdAndVersionStream secondayStream, IdAndVersionStreamVerifierListener idAndVersionStreamVerifierListener) {
         long numItems = 0;
         long begin = System.currentTimeMillis();
 
@@ -46,7 +39,7 @@ public class IdAndVersionStreamVerifier {
                     idAndVersionStreamVerifierListener.onVersionMisMatch(primaryItem, secondaryItem);
                     primaryItem = next(primaryIterator);
                     secondaryItem = next(secondaryIterator);
-                } else if (comparator.compare(primaryItem, secondaryItem) < 0) {
+                } else if (primaryItem.compareTo(secondaryItem) < 0) {
                     idAndVersionStreamVerifierListener.onMissingInSecondaryStream(primaryItem);
                     primaryItem = next(primaryIterator);
                 } else {

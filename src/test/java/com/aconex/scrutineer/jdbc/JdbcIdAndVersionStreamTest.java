@@ -20,9 +20,14 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.aconex.scrutineer.IdAndVersionFactory;
+import com.aconex.scrutineer.StringIdAndVersion;
+
 public class JdbcIdAndVersionStreamTest {
 
     private static final String SQL = "select id, version from tablename order by id";
+
+	private IdAndVersionFactory idAndVersionFactory = StringIdAndVersion.FACTORY;
 
     @Mock
     private Connection connection;
@@ -45,7 +50,7 @@ public class JdbcIdAndVersionStreamTest {
         when(statement.executeQuery(SQL)).thenReturn(resultSet);
         when(resultSet.getMetaData()).thenReturn(metaData);
 
-        JdbcIdAndVersionStream jdbcIdAndVersionStream = new JdbcIdAndVersionStream(connection, SQL);
+        JdbcIdAndVersionStream jdbcIdAndVersionStream = new JdbcIdAndVersionStream(connection, SQL, idAndVersionFactory);
         jdbcIdAndVersionStream.open();
         jdbcIdAndVersionStream.close();
 
@@ -56,7 +61,7 @@ public class JdbcIdAndVersionStreamTest {
 
     @Test
     public void closeShouldDoNothingIfNotOpen() throws SQLException {
-        JdbcIdAndVersionStream jdbcIdAndVersionStream = new JdbcIdAndVersionStream(connection, SQL);
+        JdbcIdAndVersionStream jdbcIdAndVersionStream = new JdbcIdAndVersionStream(connection, SQL, idAndVersionFactory);
         jdbcIdAndVersionStream.close();
         verifyNoMoreInteractions(connection);
     }
@@ -67,7 +72,7 @@ public class JdbcIdAndVersionStreamTest {
         //TODO: Handle scrolling properly
         when(statement.executeQuery(SQL)).thenReturn(resultSet);
         when(resultSet.getMetaData()).thenReturn(metaData);
-        JdbcIdAndVersionStream jdbcIdAndVersionStream = new JdbcIdAndVersionStream(connection, SQL);
+        JdbcIdAndVersionStream jdbcIdAndVersionStream = new JdbcIdAndVersionStream(connection, SQL, idAndVersionFactory);
         jdbcIdAndVersionStream.open();
         IdAndVersionResultSetIterator iterator = (IdAndVersionResultSetIterator) jdbcIdAndVersionStream.iterator();
         assertThat(iterator.getResultSet(), is(resultSet));
@@ -79,7 +84,7 @@ public class JdbcIdAndVersionStreamTest {
         when(connection.createStatement()).thenReturn(statement);
         when(statement.executeQuery(SQL)).thenReturn(resultSet);
         when(resultSet.getMetaData()).thenReturn(metaData);
-        JdbcIdAndVersionStream jdbcIdAndVersionStream = new JdbcIdAndVersionStream(connection, SQL);
+        JdbcIdAndVersionStream jdbcIdAndVersionStream = new JdbcIdAndVersionStream(connection, SQL, idAndVersionFactory);
         jdbcIdAndVersionStream.open();
         jdbcIdAndVersionStream.iterator();
         jdbcIdAndVersionStream.close();
@@ -97,7 +102,7 @@ public class JdbcIdAndVersionStreamTest {
             fail("Unexpected exception");
         }
         doThrow(new SQLException()).when(resultSet).close();
-        JdbcIdAndVersionStream jdbcIdAndVersionStream = new JdbcIdAndVersionStream(connection, SQL);
+        JdbcIdAndVersionStream jdbcIdAndVersionStream = new JdbcIdAndVersionStream(connection, SQL, idAndVersionFactory);
         jdbcIdAndVersionStream.open();
         jdbcIdAndVersionStream.iterator();
         jdbcIdAndVersionStream.close();

@@ -1,0 +1,19 @@
+<!DOCTYPE dataset SYSTEM "dataset.dtd">
+<dataset>
+    <table name="test">
+        <column>id</column>
+        <column>version</column>
+        <row>
+            <value>1111</value>
+            <value>10</value>
+        </row>
+        <row>
+            <value>222</value>
+            <value>20</value>
+        </row>
+        <row>
+            <value>33</value>
+            <value>30</value>
+        </row>
+    </table>
+</dataset>

@@ -1,58 +1,14 @@
 package com.aconex.scrutineer;
 
-import org.apache.commons.lang.builder.CompareToBuilder;
-
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-public class IdAndVersion implements Comparable<IdAndVersion> {
+public interface IdAndVersion extends Comparable<IdAndVersion> {
 
-    private final String id;
-    private final long version;
+	String getId();
 
-    public IdAndVersion(String id, long version) {
-        this.id = id;
-        this.version = version;
-    }
+	long getVersion();
 
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof IdAndVersion)) {
-            return false;
-        }
-        IdAndVersion other = (IdAndVersion) obj;
-        return this.compareTo(other) == 0;
-    }
+	void writeToStream(ObjectOutputStream objectOutputStream) throws IOException;
 
-    @Override
-    public int hashCode() {
-        return toString().hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return id + ":" + version;
-    }
-
-    public int compareTo(IdAndVersion other) {
-        return new CompareToBuilder().append(id, other.id).append(version, other.version).toComparison();
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public long getVersion() {
-        return version;
-    }
-
-    public void writeToStream(ObjectOutputStream objectOutputStream) throws IOException {
-        objectOutputStream.writeUTF(id);
-        objectOutputStream.writeLong(version);
-    }
-
-    public static IdAndVersion readFromStream(ObjectInputStream inputStream) throws IOException {
-        return new IdAndVersion(inputStream.readUTF(), inputStream.readLong());
-    }
 }

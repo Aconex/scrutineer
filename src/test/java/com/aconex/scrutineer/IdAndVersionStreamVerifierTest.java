@@ -222,10 +222,10 @@ public class IdAndVersionStreamVerifierTest {
     }
 
     static IdAndVersion item(long version) {
-        return new IdAndVersion("" + version, version);
+        return new StringIdAndVersion("" + version, version);
     }
 
     static IdAndVersion item(String id, long version) {
-        return new IdAndVersion(id, version);
+        return new StringIdAndVersion(id, version);
     }
 }

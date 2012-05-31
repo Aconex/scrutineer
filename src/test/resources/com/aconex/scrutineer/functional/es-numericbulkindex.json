@@ -1,0 +1,6 @@
+{ "index" : { "_index" : "test", "_type" : "task", "_id" : "1111" , "version_type": "external", "version": 10} }
+{}
+{ "index" : { "_index" : "test", "_type" : "task", "_id" : "33" , "version_type": "external", "version": 42} }
+{}
+{ "index" : { "_index" : "test", "_type" : "task", "_id" : "4" , "version_type": "external", "version": 40} }
+{}

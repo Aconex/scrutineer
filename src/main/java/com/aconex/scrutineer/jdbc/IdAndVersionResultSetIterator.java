@@ -6,19 +6,26 @@ import java.sql.Types;
 import java.util.Iterator;
 
 import com.aconex.scrutineer.IdAndVersion;
+import com.aconex.scrutineer.IdAndVersionFactory;
+
 import org.apache.commons.lang.NotImplementedException;
 
 public class IdAndVersionResultSetIterator implements Iterator<IdAndVersion> {
 
     private final ResultSet resultSet;
+	private final IdAndVersionFactory factory;
+
+    private final int idColumnType;
+    private final int versionColumnType;
 
     private IdAndVersion current;
-    private final int columnClass;
 
-    public IdAndVersionResultSetIterator(ResultSet resultSet) {
+    public IdAndVersionResultSetIterator(ResultSet resultSet, IdAndVersionFactory factory) {
         this.resultSet = resultSet;
+        this.factory = factory;
         try {
-            this.columnClass = resultSet.getMetaData().getColumnType(2);
+            this.idColumnType = resultSet.getMetaData().getColumnType(1);
+            this.versionColumnType = resultSet.getMetaData().getColumnType(2);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -47,8 +54,19 @@ public class IdAndVersionResultSetIterator implements Iterator<IdAndVersion> {
     // TODO talk to Leon about this Cyclomatic Complexity for checkstyle
     //CHECKSTYLE:OFF
     @SuppressWarnings("PMD.NcssMethodCount")
-    private long getVersionValueAnLong() throws SQLException {
-        switch (this.columnClass) {
+    private Object getIdValue() throws SQLException {
+        switch (this.idColumnType) {
+        case Types.BIGINT:
+        case Types.INTEGER:
+            return resultSet.getLong(1);
+        default:
+            return resultSet.getString(1);
+        }
+	}
+
+    @SuppressWarnings("PMD.NcssMethodCount")
+    private long getVersionValueAsLong() throws SQLException {
+        switch (this.versionColumnType) {
             case Types.TIMESTAMP:
                 return resultSet.getTimestamp(2).getTime();
 
@@ -56,7 +74,7 @@ public class IdAndVersionResultSetIterator implements Iterator<IdAndVersion> {
             case Types.INTEGER:
                 return resultSet.getLong(2);
             default:
-                throw new UnsupportedOperationException(String.format("Do not know how to handle version column type (java.sql.Type value=%d", columnClass));
+                throw new UnsupportedOperationException(String.format("Do not know how to handle version column type (java.sql.Type value=%d", versionColumnType));
         }
     }
     //CHECKSTYLE:ON
@@ -65,7 +83,7 @@ public class IdAndVersionResultSetIterator implements Iterator<IdAndVersion> {
     private void nextRow() {
         try {
             if (resultSet.next()) {
-                current = new IdAndVersion(resultSet.getString(1), getVersionValueAnLong());
+                current = factory.create(getIdValue(), getVersionValueAsLong());
             } else {
                 current = null;
             }
@@ -75,7 +93,7 @@ public class IdAndVersionResultSetIterator implements Iterator<IdAndVersion> {
 
     }
 
-    ResultSet getResultSet() {
+	ResultSet getResultSet() {
         return resultSet;
     }
 }

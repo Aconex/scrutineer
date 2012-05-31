@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.util.Iterator;
 
 import com.aconex.scrutineer.IdAndVersion;
+import com.aconex.scrutineer.IdAndVersionFactory;
+import com.aconex.scrutineer.StringIdAndVersion;
 import org.dbunit.DataSourceBasedDBTestCase;
 import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.xml.XmlDataSet;
@@ -18,11 +20,12 @@ public class JdbcIdAndVersionStreamIntegrationTest extends DataSourceBasedDBTest
 
     private static final String SQL = "Select id, version from test";
     private final HSQLHelper HSQLHelper = new HSQLHelper();
+	private IdAndVersionFactory idAndVersionFactory = StringIdAndVersion.FACTORY;
 
 
     public void testShouldReturnTuplesInCorrectOrder() throws SQLException {
 
-        JdbcIdAndVersionStream jdbcIdAndVersionStream = new JdbcIdAndVersionStream(getDataSource().getConnection(), SQL);
+        JdbcIdAndVersionStream jdbcIdAndVersionStream = new JdbcIdAndVersionStream(getDataSource().getConnection(), SQL, idAndVersionFactory);
 
         jdbcIdAndVersionStream.open();
 

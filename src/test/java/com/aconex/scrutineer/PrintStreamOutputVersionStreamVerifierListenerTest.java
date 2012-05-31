@@ -12,7 +12,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class PrintStreamOutputVersionStreamVerifierListenerTest {
 
-    private final IdAndVersion idAndVersion = new IdAndVersion("1", 10);
+    private final StringIdAndVersion idAndVersion = new StringIdAndVersion("1", 10);
 
     @Mock
     private PrintStream printStream;
@@ -42,7 +42,7 @@ public class PrintStreamOutputVersionStreamVerifierListenerTest {
     @Test
     public void testOnVersionMisMatch() throws Exception {
         PrintStreamOutputVersionStreamVerifierListener streamVerifierListener = new PrintStreamOutputVersionStreamVerifierListener(printStream);
-        streamVerifierListener.onVersionMisMatch(idAndVersion, new IdAndVersion("1",9));
+        streamVerifierListener.onVersionMisMatch(idAndVersion, new StringIdAndVersion("1",9));
         verify(printStream).println("MISMATCH\t1\t10\tsecondaryVersion=9");
         verifyNoMoreInteractions(printStream);
     }

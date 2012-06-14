@@ -13,8 +13,6 @@ public class IdAndVersionStreamVerifier {
 
     private static final Logger LOG = LogUtils.loggerForThisClass();
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(2, new NamedDaemonThreadFactory("StreamOpener"));
-
     //CHECKSTYLE:OFF
     @SuppressWarnings("PMD.NcssMethodCount")
 	public void verify(IdAndVersionStream primaryStream, IdAndVersionStream secondayStream, IdAndVersionStreamVerifierListener idAndVersionStreamVerifierListener) {
@@ -33,15 +31,15 @@ public class IdAndVersionStreamVerifier {
 
             while (primaryItem != null && secondaryItem != null) {
                 if (primaryItem.equals(secondaryItem)) {
-                    primaryItem = next(primaryIterator);
+                    primaryItem = verifiedNext(primaryIterator, primaryItem);
                     secondaryItem = next(secondaryIterator);
                 } else if (primaryItem.getId().equals(secondaryItem.getId())) {
                     idAndVersionStreamVerifierListener.onVersionMisMatch(primaryItem, secondaryItem);
-                    primaryItem = next(primaryIterator);
+                    primaryItem = verifiedNext(primaryIterator, primaryItem);
                     secondaryItem = next(secondaryIterator);
                 } else if (primaryItem.compareTo(secondaryItem) < 0) {
                     idAndVersionStreamVerifierListener.onMissingInSecondaryStream(primaryItem);
-                    primaryItem = next(primaryIterator);
+                    primaryItem = verifiedNext(primaryIterator, primaryItem);
                 } else {
                     idAndVersionStreamVerifierListener.onMissingInPrimaryStream(secondaryItem);
                     secondaryItem = next(secondaryIterator);
@@ -51,7 +49,7 @@ public class IdAndVersionStreamVerifier {
 
             while (primaryItem != null) {
                 idAndVersionStreamVerifierListener.onMissingInSecondaryStream(primaryItem);
-                primaryItem = next(primaryIterator);
+                primaryItem = verifiedNext(primaryIterator, primaryItem);
                 numItems++;
             }
 
@@ -68,30 +66,44 @@ public class IdAndVersionStreamVerifier {
     }
     //CHECKSTYLE:ON
 
-    private void parallelOpenStreamsAndWait(IdAndVersionStream primaryStream, IdAndVersionStream secondaryStream) {
-        Future<?> primaryOpenCall = executorService.submit(new OpenStreamRunner(primaryStream));
-        Future<?> secondaryOpenCall = executorService.submit(new OpenStreamRunner(secondaryStream));
+    @SuppressWarnings("PMD.NcssMethodCount")
+	private void parallelOpenStreamsAndWait(IdAndVersionStream primaryStream, IdAndVersionStream secondaryStream) {
+		try {
+			ExecutorService executorService = Executors.newFixedThreadPool(1, new NamedDaemonThreadFactory("StreamOpener"));
+			Future<?> secondaryStreamFuture = executorService.submit(new OpenStreamRunner(secondaryStream));
 
-        getAllFutures(primaryOpenCall, secondaryOpenCall);
-    }
+			primaryStream.open();
+			secondaryStreamFuture.get();
 
-    private void getAllFutures(Future<?>... futures) {
-        try {
-            for (Future<?> future : futures) {
-                future.get();
-            }
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to open one or both of the streams in parallel", e);
-        }
-    }
+			executorService.shutdown();
+		} catch (Exception e) {
+			throw new IllegalStateException("Failed to open one or both of the streams in parallel", e);
+		}
+	}
 
-    private IdAndVersion next(Iterator<IdAndVersion> iterator) {
-        if (iterator.hasNext()) {
-            return iterator.next();
-        } else {
-            return null;
-        }
-    }
+	private IdAndVersion verifiedNext(Iterator<IdAndVersion> iterator, IdAndVersion previous) {
+		IdAndVersion next = next(iterator);
+		if (next != null && previous.compareTo(next) >= 0) {
+			throw new IllegalStateException("primary stream not ordered as expected: " + next + " followed "
+					+ previous);
+		} else {
+			return next;
+		}
+	}
+
+	@SuppressWarnings("PMD.NcssMethodCount")
+	private IdAndVersion next(Iterator<IdAndVersion> iterator) {
+		if (iterator.hasNext()) {
+			IdAndVersion next = iterator.next();
+			if (next == null) {
+				throw new IllegalStateException("stream must not return null");
+			} else {
+				return next;
+			}
+		} else {
+			return null;
+		}
+	}
 
     private void closeWithoutThrowingException(IdAndVersionStream idAndVersionStream) {
         try {
@@ -102,15 +114,15 @@ public class IdAndVersionStreamVerifier {
     }
 
     private static class OpenStreamRunner implements Runnable {
-        private final IdAndVersionStream primaryStream;
+        private final IdAndVersionStream stream;
 
-        public OpenStreamRunner(IdAndVersionStream primaryStream) {
-            this.primaryStream = primaryStream;
+        public OpenStreamRunner(IdAndVersionStream stream) {
+            this.stream = stream;
         }
 
         @Override
         public void run() {
-            primaryStream.open();
+        	stream.open();
         }
     }
 

@@ -23,8 +23,8 @@ public class IdAndVersionStreamVerifierTest {
 
     private static final List<IdAndVersion> LIST = Collections.unmodifiableList(newArrayList(
             item("1", 1),
-            item("3", 3),
-            item("2", 2)));
+            item("2", 2),
+            item("3", 3)));
 
     @Mock
     private IdAndVersionStream primaryStream;

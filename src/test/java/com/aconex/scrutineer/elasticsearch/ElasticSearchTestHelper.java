@@ -12,7 +12,7 @@ public class ElasticSearchTestHelper {
     }
 
     public void deleteIndexIfItExists(String indexName) {
-        if (client.admin().indices().prepareExists(indexName).execute().actionGet().exists()) {
+        if (client.admin().indices().prepareExists(indexName).execute().actionGet().isExists()) {
             client.admin().indices().prepareDelete(indexName).execute().actionGet();
         }
 

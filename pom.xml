@@ -74,7 +74,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <elasticsearch.version>7.9.3</elasticsearch.version>
+        <elasticsearch.version>7.11.2</elasticsearch.version>
         <!-- Common CVSS vulnerabilities mean we often have to declare specific dependencies on ES's netty  -->
         <netty.version>4.1.59.Final</netty.version>
         <log4j.version>2.14.0</log4j.version>
